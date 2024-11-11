@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
+
 
 public class MainManager : MonoBehaviour
 {
@@ -11,14 +13,28 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+
     public GameObject GameOverText;
     
     private bool m_Started = false;
-    private int m_Points;
+    public int m_Points;
     
     private bool m_GameOver = false;
+    public int highScore;
+    public string highScorePlayerName;
 
-    
+    private string filePath; // Der Pfad, unter dem die JSON-Datei gespeichert wird
+
+
+    private void Awake()
+    {
+
+
+        filePath = Application.persistentDataPath + "/highscore.json"; // Datei-Pfad für die JSON-Datei
+
+        LoadHighScore(); // Lade den Highscore beim Start
+    }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -72,5 +88,51 @@ public class MainManager : MonoBehaviour
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+    }
+
+    [System.Serializable]
+    public class HighScoreData
+    {
+        public string playerName;
+        public int highScore;
+    }
+
+    public void SaveHighScore(int score, string player)
+    {
+        // Speichere den neuen Highscore und den Spielernamen
+        highScore = score;
+        highScorePlayerName = player;
+
+        // Erstelle ein HighScoreData-Objekt mit den aktuellen Daten
+        HighScoreData data = new HighScoreData();
+        data.playerName = highScorePlayerName;
+        data.highScore = highScore;
+
+        // Konvertiere das Objekt in JSON und speichere es in einer Datei
+        string json = JsonUtility.ToJson(data);
+        File.WriteAllText(filePath, json);
+
+        Debug.Log("Highscore gespeichert: " + json);
+    }
+
+    private void LoadHighScore()
+    {
+        // Überprüfen, ob die Datei existiert
+        if (File.Exists(filePath))
+        {
+            // Lese die JSON-Daten aus der Datei und konvertiere sie zurück in ein HighScoreData-Objekt
+            string json = File.ReadAllText(filePath);
+            HighScoreData data = JsonUtility.FromJson<HighScoreData>(json);
+
+            // Lade die gespeicherten Daten
+            highScore = data.highScore;
+            highScorePlayerName = data.playerName;
+
+            Debug.Log("Highscore geladen: " + json);
+        }
+        else
+        {
+            Debug.Log("Keine Highscore-Datei gefunden.");
+        }
     }
 }
